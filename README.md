@@ -29,29 +29,29 @@ The diagnostic server runs inside a headless **Ubuntu Server 22.04 LTS** virtual
 * **Bridged Adapter Architecture**: The VM is attached directly to the host's physical network adapter. The local router assigns the VM an independent IP within the primary subnet (e.g., `192.168.1.x/24`), enabling genuine Layer 2/3 device probing and default gateway health checks.
 * **Why Not NAT?**: Standard NAT places the VM behind host address translation (typically `10.0.2.x`), isolating it from the physical local area network and preventing true local gateway failure analysis.
 * **Headless Deployment**: Provisioned without a Desktop GUI to minimize resource footprint (2GB RAM, 1 vCPU) and match enterprise data center server standards.
+## 🚀 Flowchart
 
 ```mermaid
-graph TD
-    subgraph LAN ["Physical LAN Subnet (192.168.1.0/24)"]
-        Router["Physical Router / Gateway<br><code>192.168.1.1</code>"]
+flowchart TD
+    subgraph LAN["Physical LAN Subnet (192.168.1.0/24)"]
+        Router["Physical Router / Gateway<br>(192.168.1.1)"]
         Host["Windows Host NIC / Wi-Fi"]
         Router --> Host
     end
 
-    Host ==>|"Bridged Network Adapter"| VM
+    Host ==>|Bridged Network Adapter| VM
 
-    subgraph VM ["VirtualBox Guest: netdiag-server (Ubuntu Server 22.04 LTS)"]
-        direction TB
+    subgraph VM["VirtualBox VM: netdiag-server (Ubuntu Server 22.04 LTS)"]
         P1["1. Ping Target (ICMP)"]
-        P1 -->|"Target DOWN"| P2["2. Check Gateway Reachability"]
-        P2 -->|"Gateway OK"| P3["3. DNS Lookup (nslookup)"]
-        P3 -->|"DNS OK"| P4["4. Traceroute Hop Isolation"]
-    end
+        P2["2. Check Gateway Reachability"]
+        P3["3. DNS Lookup (nslookup)"]
+        P4["4. Traceroute Hop Isolation"]
 
-    classDef darkBox fill:#161b22,stroke:#30363d,stroke-width:1px,color:#c9d1d9;
-    classDef nodeBox fill:#21262d,stroke:#58a6ff,stroke-width:1px,color:#f0f6fc;
-    class Router,Host,P1,P2,P3,P4 nodeBox;
----
+        P1 -->|Target DOWN| P2
+        P2 -->|Gateway OK| P3
+        P3 -->|DNS OK| P4
+    end
+```
 
 ## 🚀 Key Features
 
