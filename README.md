@@ -1,7 +1,26 @@
-# NetDiag — Automated Network Outage Diagnostic Tool
+<div align="center">
 
-A Bash-based diagnostic script built on a self-provisioned Linux server that automatically isolates the root cause of network outages — mimicking the layered troubleshooting approach a network/systems technician follows manually, but automated and logged for repeatable use.
+# 🌐 Auto-Diagnosing Network Outage Detector
+### *Automated Layered Fault-Isolation Engine*
 
+[![Ubuntu](https://img.shields.io/badge/Ubuntu%20Server-22.04%20LTS-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)](https://ubuntu.com/)
+[![Bash Shell](https://img.shields.io/badge/Shell-Bash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white)](https://www.gnu.org/software/bash/)
+[![VirtualBox](https://img.shields.io/badge/VirtualBox-Bridged%20NIC-183A61?style=for-the-badge&logo=virtualbox&logoColor=white)](https://www.virtualbox.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+
+<p align="center">
+  <b>A proactive diagnostic engine that doesn't just ask <i>"is it down?"</i> — it isolates <i>why</i> and <i>where</i> the network boundary broke.</b>
+</p>
+
+---
+
+</div>
+
+## 📌 Problem & Engineering Motivation
+
+Most monitoring agents only record binary uptime codes (`200 OK` vs. `Connection Timeout`). When an endpoint drops, traditional triage requires manual probing to distinguish between a dead local gateway, a broken DNS resolver, or an intermediate ISP routing failure.
+
+This tool automates the **standard operational triage workflow** of a network engineer into a single automated execution pipeline:
 ## Motivation
 
 Most basic monitoring tools tell you *that* something is down — they don't tell you *why*. When a device or service becomes unreachable, the actual cause could be at several different layers: the local network, DNS resolution, or somewhere further along the network path. NetDiag walks through these layers systematically, the same way a technician would when troubleshooting a real outage, and logs exactly where the failure occurs.
