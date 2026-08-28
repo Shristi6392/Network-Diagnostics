@@ -30,7 +30,30 @@ The diagnostic server runs inside a headless **Ubuntu Server 22.04 LTS** virtual
 * **Why Not NAT?**: Standard NAT places the VM behind host address translation (typically `10.0.2.x`), isolating it from the physical local area network and preventing true local gateway failure analysis.
 * **Headless Deployment**: Provisioned without a Desktop GUI to minimize resource footprint (2GB RAM, 1 vCPU) and match enterprise data center server standards.
 
-+--------------------------------------------------------------------------+|                            Physical LAN Subnet                           ||                                                                          ||  [ Physical Router / Gateway ] <----+                                    ||         (192.168.1.1)               |                                    ||                                     v                                    ||                          [ Host Wi-Fi / NIC ]                            ||                                     ^                                    |+-------------------------------------|------------------------------------+| Bridged Interface+-------------------------------------v------------------------------------+|  VirtualBox VM (netdiag-server)                                          ||  IP: 192.168.1.x/24 | OS: Ubuntu Server 22.04 LTS                        ||                                                                          ||   +------------------------------------------------------------------+   ||   |                       diagnose.sh Pipeline                       |   ||   |                                                                  |   ||   |  1. Ping Target  -->  2. Gateway Check  -->  3. DNS Resolution   |   ||   |                                                      |           |   ||   |                                      4. Traceroute Hop Analysis  |   ||   +------------------------------------------------------------------+   |+--------------------------------------------------------------------------+
++--------------------------------------------------------------------------+
+|                            Physical LAN Subnet                           |
+|                                                                          |
+|  [ Physical Router / Gateway ] <----+                                    |
+|         (192.168.1.1)               |                                    |
+|                                     v                                    |
+|                          [ Host Wi-Fi / NIC ]                            |
+|                                     ^                                    |
++-------------------------------------|------------------------------------+
+| Bridged Interface
++-------------------------------------v------------------------------------+
+|  VirtualBox VM (netdiag-server)                                          |
+|  IP: 192.168.1.x/24 | OS: Ubuntu Server 22.04 LTS                        |
+|                                                                          |
+|   +------------------------------------------------------------------+   |
+|   |                       diagnose.sh Pipeline                       |   |
+|   |                                                                  |   |
+|   |  1. Ping Target  -->  2. Gateway Check  -->  3. DNS Resolution   |   |
+|   |                                                      |           |   |
+|   |                                      4. Traceroute Hop Analysis  |   |
+|   +------------------------------------------------------------------+   |
++--------------------------------------------------------------------------+
+
+
 ---
 
 ## 🚀 Key Features
@@ -51,17 +74,33 @@ Install necessary diagnostic packages on your Debian/Ubuntu machine:
 ```bash
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y openssh-server net-tools traceroute dnsutils
-Script DeploymentClone the repository:Bashgit clone [https://github.com/Shristi6392/Network-Diagnostics.git](https://github.com/Shristi6392/Network-Diagnostics.git)
+Script Deployment
+Clone the repository:
+
+Bash
+git clone [https://github.com/Shristi6392/Network-Diagnostics.git](https://github.com/Shristi6392/Network-Diagnostics.git)
 cd Network-Diagnostics
-Make the diagnostic script executable:Bashchmod +x diagnose.sh
-💻 UsageRun the script against any domain name or IP address with sudo (required for log writes to /var/log/):Bash# Diagnosing a healthy target
+Make the diagnostic script executable:
+
+Bash
+chmod +x diagnose.sh
+💻 Usage
+Run the script against any domain name or IP address with sudo (required for log writes to /var/log/):
+
+Bash
+# Diagnosing a healthy target
 sudo ./diagnose.sh google.com
 
 # Diagnosing an unreachable or fake host
 sudo ./diagnose.sh 10.99.99.99
-📊 Sample Log Output (/var/log/diagnose.log)Case 1: Healthy TargetPlaintext=== Diagnosing google.com at Fri Aug 28 20:00:01 UTC 2026 ===
+📊 Sample Log Output (/var/log/diagnose.log)
+Case 1: Healthy Target
+Plaintext
+=== Diagnosing google.com at Fri Aug 28 20:00:01 UTC 2026 ===
 RESULT: google.com is UP
-Case 2: Degraded Path / Unreachable HostPlaintext=== Diagnosing 10.99.99.99 at Fri Aug 28 20:02:15 UTC 2026 ===
+Case 2: Degraded Path / Unreachable Host
+Plaintext
+=== Diagnosing 10.99.99.99 at Fri Aug 28 20:02:15 UTC 2026 ===
 ALERT: 10.99.99.99 is DOWN. Running diagnosis....
 CHECK: Gateway 192.168.1.1 is reachable - local network OK
 CHECK: DNS resolves 10.99.99.99 - DNS OK
@@ -71,7 +110,25 @@ Running traceroute to isolate failure point:
  3  * * *
  4  * * *
 ROOT CAUSE: Target unreachable past network/DNS layer - see traceroute above
-🧠 Diagnostic Logic (The "Why")The script executes sequentially along the OSI stack:StepScopeToolDiagnostic Rationale1. Target PingEnd-to-EndpingConfirms immediate reachability. If UP, exits early without overhead.2. Gateway PingLayer 2 / Layer 3ip route + pingTests local interface and router health. If gateway is down, flags local LAN outage.3. DNS ResolutionLayer 7 / ApplicationnslookupDistinguishes between global connectivity loss and simple name server resolution failure.4. Hop IsolationLayer 3 Network PathtracerouteMaps the routing path to establish whether the fault is local, ISP-side, or destination-side.🔮 Future EnhancementsCentralized Alerting: Integrate Webhook alerts for Slack and Discord notifications on outage triggers.Cron Automation: Schedule daemonized checks across multiple edge hosts simultaneously.Prometheus Metrics: Expose latency and failure codes as Prometheus metrics for Grafana dashboarding.👤 AuthorShristi — GitHub Profile
+🧠 Diagnostic Logic (The "Why")
+The script executes sequentially along the OSI stack:
+
+Step	Scope	Tool	Diagnostic Rationale
+1. Target Ping	End-to-End	ping	Confirms immediate reachability. If UP, exits early without overhead.
+2. Gateway Ping	Layer 2 / Layer 3	ip route + ping	Tests local interface and router health. If gateway is down, flags local LAN outage.
+3. DNS Resolution	Layer 7 / Application	nslookup	Distinguishes between global connectivity loss and simple name server resolution failure.
+4. Hop Isolation	Layer 3 Network Path	traceroute	Maps the routing path to establish whether the fault is local, ISP-side, or destination-side.
+🔮 Future Enhancements
+Centralized Alerting: Integrate Webhook alerts for Slack and Discord notifications on outage triggers.
+
+Cron Automation: Schedule daemonized checks across multiple edge hosts simultaneously.
+
+Prometheus Metrics: Expose latency and failure codes as Prometheus metrics for Grafana dashboarding.
+
+👤 Author
+Shristi — GitHub Profile
+
+
 ---
 
-Would you like to extend this script with an automated Cron job configuration or add
+Would you like to extend this script with an automated Cron job configuration or add multi-target health check arrays?
