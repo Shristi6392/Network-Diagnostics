@@ -30,47 +30,27 @@ The diagnostic server runs inside a headless **Ubuntu Server 22.04 LTS** virtual
 * **Why Not NAT?**: Standard NAT places the VM behind host address translation (typically `10.0.2.x`), isolating it from the physical local area network and preventing true local gateway failure analysis.
 * **Headless Deployment**: Provisioned without a Desktop GUI to minimize resource footprint (2GB RAM, 1 vCPU) and match enterprise data center server standards.
 
-+--------------------------------------------------------------------------+
-|                           Physical LAN Subnet                            |
-|                                                                          |
-|                     +--------------------------+                         |
-|                     | Physical Router/Gateway  |                         |
-|                     |      (192.168.1.1)       |                         |
-|                     +------------+-------------+                         |
-|                                  |                                       |
-|                                  v                                       |
-|                     +--------------------------+                         |
-|                     |    Host Wi-Fi / NIC      |                         |
-|                     +------------+-------------+                         |
-+----------------------------------|---------------------------------------+
-                                   | (Bridged Network Adapter)
-+----------------------------------v---------------------------------------+
-|  VirtualBox VM: netdiag-server                                           |
-|  IP: 192.168.1.x/24  |  OS: Ubuntu Server 22.04 LTS                      |
-|                                                                          |
-|  +--------------------------------------------------------------------+  |
-|  |                      diagnose.sh Execution Pipeline                |  |
-|  |                                                                    |  |
-|  |  [1. Ping Target]                                                  |  |
-|  |         |                                                          |  |
-|  |         +---> (Target DOWN)                                        |  |
-|  |                     |                                              |  |
-|  |                     v                                              |  |
-|  |         [2. Gateway Health Check]                                  |  |
-|  |                     |                                              |  |
-|  |                     +---> (Gateway Reachable - Local OK)           |  |
-|  |                                 |                                  |  |
-|  |                                 v                                  |  |
-|  |                     [3. DNS Resolution Query]                      |  |
-|  |                                 |                                  |  |
-|  |                                 +---> (DNS Resolved - Server OK)   |  |
-|  |                                             |                      |  |
-|  |                                             v                      |  |
-|  |                                 [4. Traceroute Hop Analysis]       |  |
-|  +--------------------------------------------------------------------+  |
-+--------------------------------------------------------------------------+
+```mermaid
+graph TD
+    subgraph LAN ["Physical LAN Subnet (192.168.1.0/24)"]
+        Router["Physical Router / Gateway<br><code>192.168.1.1</code>"]
+        Host["Windows Host NIC / Wi-Fi"]
+        Router --> Host
+    end
 
+    Host ==>|"Bridged Network Adapter"| VM
 
+    subgraph VM ["VirtualBox Guest: netdiag-server (Ubuntu Server 22.04 LTS)"]
+        direction TB
+        P1["1. Ping Target (ICMP)"]
+        P1 -->|"Target DOWN"| P2["2. Check Gateway Reachability"]
+        P2 -->|"Gateway OK"| P3["3. DNS Lookup (nslookup)"]
+        P3 -->|"DNS OK"| P4["4. Traceroute Hop Isolation"]
+    end
+
+    classDef darkBox fill:#161b22,stroke:#30363d,stroke-width:1px,color:#c9d1d9;
+    classDef nodeBox fill:#21262d,stroke:#58a6ff,stroke-width:1px,color:#f0f6fc;
+    class Router,Host,P1,P2,P3,P4 nodeBox;
 ---
 
 ## 🚀 Key Features
@@ -143,7 +123,7 @@ Cron Automation: Schedule daemonized checks across multiple edge hosts simultane
 Prometheus Metrics: Expose latency and failure codes as Prometheus metrics for Grafana dashboarding.
 
 👤 Author
-Shristi — GitHub Profile
+Shristi — https://github.com/Shristi6392
 
 
 ---
