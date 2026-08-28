@@ -31,26 +31,43 @@ The diagnostic server runs inside a headless **Ubuntu Server 22.04 LTS** virtual
 * **Headless Deployment**: Provisioned without a Desktop GUI to minimize resource footprint (2GB RAM, 1 vCPU) and match enterprise data center server standards.
 
 +--------------------------------------------------------------------------+
-|                            Physical LAN Subnet                           |
+|                           Physical LAN Subnet                            |
 |                                                                          |
-|  [ Physical Router / Gateway ] <----+                                    |
-|         (192.168.1.1)               |                                    |
-|                                     v                                    |
-|                          [ Host Wi-Fi / NIC ]                            |
-|                                     ^                                    |
-+-------------------------------------|------------------------------------+
-| Bridged Interface
-+-------------------------------------v------------------------------------+
-|  VirtualBox VM (netdiag-server)                                          |
-|  IP: 192.168.1.x/24 | OS: Ubuntu Server 22.04 LTS                        |
+|                     +--------------------------+                         |
+|                     | Physical Router/Gateway  |                         |
+|                     |      (192.168.1.1)       |                         |
+|                     +------------+-------------+                         |
+|                                  |                                       |
+|                                  v                                       |
+|                     +--------------------------+                         |
+|                     |    Host Wi-Fi / NIC      |                         |
+|                     +------------+-------------+                         |
++----------------------------------|---------------------------------------+
+                                   | (Bridged Network Adapter)
++----------------------------------v---------------------------------------+
+|  VirtualBox VM: netdiag-server                                           |
+|  IP: 192.168.1.x/24  |  OS: Ubuntu Server 22.04 LTS                      |
 |                                                                          |
-|   +------------------------------------------------------------------+   |
-|   |                       diagnose.sh Pipeline                       |   |
-|   |                                                                  |   |
-|   |  1. Ping Target  -->  2. Gateway Check  -->  3. DNS Resolution   |   |
-|   |                                                      |           |   |
-|   |                                      4. Traceroute Hop Analysis  |   |
-|   +------------------------------------------------------------------+   |
+|  +--------------------------------------------------------------------+  |
+|  |                      diagnose.sh Execution Pipeline                |  |
+|  |                                                                    |  |
+|  |  [1. Ping Target]                                                  |  |
+|  |         |                                                          |  |
+|  |         +---> (Target DOWN)                                        |  |
+|  |                     |                                              |  |
+|  |                     v                                              |  |
+|  |         [2. Gateway Health Check]                                  |  |
+|  |                     |                                              |  |
+|  |                     +---> (Gateway Reachable - Local OK)           |  |
+|  |                                 |                                  |  |
+|  |                                 v                                  |  |
+|  |                     [3. DNS Resolution Query]                      |  |
+|  |                                 |                                  |  |
+|  |                                 +---> (DNS Resolved - Server OK)   |  |
+|  |                                             |                      |  |
+|  |                                             v                      |  |
+|  |                                 [4. Traceroute Hop Analysis]       |  |
+|  +--------------------------------------------------------------------+  |
 +--------------------------------------------------------------------------+
 
 
