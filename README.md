@@ -18,11 +18,6 @@
 
 ## 📌 Problem & Engineering Motivation
 
-Most monitoring agents only record binary uptime codes (`200 OK` vs. `Connection Timeout`). When an endpoint drops, traditional triage requires manual probing to distinguish between a dead local gateway, a broken DNS resolver, or an intermediate ISP routing failure.
-
-This tool automates the **standard operational triage workflow** of a network engineer into a single automated execution pipeline:
-## Motivation
-
 Most basic monitoring tools tell you *that* something is down — they don't tell you *why*. When a device or service becomes unreachable, the actual cause could be at several different layers: the local network, DNS resolution, or somewhere further along the network path. NetDiag walks through these layers systematically, the same way a technician would when troubleshooting a real outage, and logs exactly where the failure occurs.
 
 ## Environment
@@ -42,6 +37,91 @@ The script follows a layered diagnostic sequence, checking one layer at a time a
 
 Every step is logged with a timestamp to `/var/log/diagnose.log`, so results are auditable and can be reviewed after the fact — not just observed live.
 
+---
+
+## 🧱 Systems Architecture & Deployment
+
+### ⚙️ Network Mode: Bridged vs. NAT
+
+<table>
+<tr>
+<td width="50%">
+
+### ❌ Standard NAT Mode
+* Guest sits behind host address translation (`10.0.2.x`).
+* VM cannot query or probe actual LAN nodes or physical gateway.
+* Useless for true local Layer 2/Layer 3 fault domain validation.
+
+</td>
+<td width="50%">
+
+### ✅ Bridged Adapter Mode
+* Virtual NIC attaches directly to physical Wi-Fi/Ethernet interface.
+* Router assigns dedicated local IP (`192.168.1.x/24`).
+* Enables native ICMP sweeps, default gateway validation, and real subnet probing.
+
+</td>
+</tr>
+</table>
+
+---
+
+## ⚡ Execution Pipeline (Layer-by-Layer)
+
+<details open>
+<summary><b>🔍 1. End-to-End Availability (ICMP)</b></summary>
+<br>
+
+* **Command**: `ping -c 2 -W 1 "$TARGET"`
+* **Action**: Rapid probe with aggressive 1-second timeout.
+* **Exit**: If host responds, marks `UP` and terminates early with zero overhead.
+
+</details>
+
+<details>
+<summary><b>🚪 2. Gateway Reachability (Layer 2 / Layer 3)</b></summary>
+<br>
+
+* **Command**: `GATEWAY=$(ip route | grep default | awk '{print $3}')`
+* **Action**: Dynamically fetches the default route from kernel routing table and validates router reachability.
+* **Failure Flag**: `ROOT CAUSE: Local network/gateway is down ($GATEWAY unreachable)`
+
+</details>
+
+<details>
+<summary><b>🏷️ 3. Domain Resolution Health (Application Layer)</b></summary>
+<br>
+
+* **Command**: `nslookup "$TARGET"`
+* **Action**: Separates network-layer reachability from name-server resolution failure.
+* **Failure Flag**: `ROOT CAUSE: DNS resolution failure for $TARGET`
+
+</details>
+
+<details>
+<summary><b>🛰️ 4. Transit Path Isolation (Traceroute)</b></summary>
+<br>
+
+* **Command**: `traceroute -m 15 "$TARGET"`
+* **Action**: Performs a max-15 hop probe to isolate the exact router/ISP transit point where packet drop occurs.
+* **Log Output**: Appends full hop metrics into `/var/log/diagnose.log`.
+
+</details>
+
+---
+
+## 🚀 Quickstart & Usage
+
+```bash
+# 1. Clone repository
+git clone [https://github.com/Shristi6392/Network-Diagnostics.git](https://github.com/Shristi6392/Network-Diagnostics.git)
+cd Network-Diagnostics
+
+# 2. Grant execution permission
+chmod +x diagnose.sh
+
+# 3. Run target diagnosis
+sudo ./diagnose.sh google.com
 ## Usage
 
 ```bash
